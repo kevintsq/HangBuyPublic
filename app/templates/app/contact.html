@@ -1,0 +1,26 @@
+{% extends "app/layout.html" %}
+
+{% block content %}
+
+<h2>{{ title }}.</h2>
+<h3>{{ message }}</h3>
+
+{% if product_list %}
+    {% for product in products %}
+    <address>
+        {{product.name}}<br />
+        {{product.product_type}}<br />
+        <abbr title="Phone">P:</abbr>
+        425.555.0100
+    </address>
+    {% endfor %}
+{% else %}
+    <p>No contact are available.</p>
+{% endif %}
+
+<address>
+    <strong>Support:</strong>   <a href="mailto:Support@example.com">Support@example.com</a><br />
+    <strong>Marketing:</strong> <a href="mailto:Marketing@example.com">Marketing@example.com</a>
+</address>
+
+{% endblock %}

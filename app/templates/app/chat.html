@@ -1,0 +1,167 @@
+<!--
+  ~ Copyright (c) 2021 Kevin Tan. All Rights Reserved.
+  -->
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>聊天</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'app/css/normalize.css' %}"/>
+    <!-- <link rel="stylesheet" href="css/final-style.css" /> -->
+    <link rel="stylesheet" href="{% static 'app/css/styles.css' %}"/>
+    <script src="{% static 'app/scripts/axios.js' %}"></script>
+</head>
+<body>
+<div class="container">
+    <div class="chat-box">
+        <div class="chat-top">
+            <img id="avatar" width="48" height="48" style="object-fit: fill">
+            <h3 class="top__heading" id="username"></h3>
+            <a class="close" href="javascript:window.location.href = window.location.origin">
+                <img class="close-img" width="24" height="24" src="{% static 'app/img/close.svg' %}" alt="Exit">
+            </a>
+        </div>
+        <div class="chat-body" id="body"></div>
+        <div class="bottom-line">
+            <hr class="line">
+        </div>
+        <div class="new-message">
+            <div class="form-group">
+                <input class="message-input" id="input" type="text" name="text" placeholder="在这里输入消息" required>
+            </div>
+            <input class="button" id="submit" type="button" value="发送">
+        </div>
+    </div>
+</div>
+<script>
+    // 获取对方id
+    const userId = window.location.pathname.split('/')[3];
+    const ele_body = document.getElementById("body");
+
+    function addText(message) {
+        const text_message = document.createTextNode(message.content);
+        const ele_para = document.createElement('p');
+        ele_para.appendChild(text_message);
+        const date = new Date(message.create_time);
+        const text_time = document.createTextNode(date.getHours() + ':' + date.getMinutes());
+        const ele_time = document.createElement('time');
+        ele_time.className = 'time';
+        ele_time.appendChild(text_time);
+        const ele_div = document.createElement('div');
+        ele_div.appendChild(ele_time);
+        ele_div.append(ele_para);
+        ele_body.appendChild(ele_div);
+        if (message.sender == userId) {
+            ele_para.className = 't-left text';
+            ele_div.className = 'message m-left';
+        } else {
+            ele_para.className = 't-right text'
+            ele_div.className = 'message m-right';
+        }
+    }
+
+    function addAlert(message) {
+        const newText = document.createTextNode(message);
+        const newP = document.createElement('p');
+        newP.className = 'blocked t-right text';
+        newP.appendChild(newText);
+        const newDiv = document.createElement('div');
+        newDiv.className = 'message m-right';
+        newDiv.append(newP);
+        ele_body.appendChild(newDiv);
+    }
+
+    function addNotice(message) {
+        const newText = document.createTextNode(message);
+        const newP = document.createElement('p');
+        newP.className = 'line-time';
+        newP.appendChild(newText);
+        const newDiv = document.createElement('div');
+        newDiv.className = 'line-text';
+        newDiv.append(newP);
+        ele_body.appendChild(newDiv);
+    }
+
+    axios.get(window.location.origin + "/api/user/" + userId + "/")
+    .then( e => {
+        if (e.status === 200) {
+            document.getElementById("username").innerText = e.data.detail.user.username;
+            const avatar = document.getElementById("avatar");
+            avatar.src = window.location.origin + e.data.detail.avatar;
+        } else {
+            addAlert("用户信息读取失败")
+        }
+    })
+    .catch( () => {
+        addAlert("用户信息读取失败")
+    })
+
+    axios.get(window.location.href)
+        .then(function (e) {
+            if (e.status === 200) {
+                e.data.detail.forEach(m => {
+                    addText(m);
+                })
+            } else {
+                addAlert(JSON.stringify(e.data.detail));
+            }
+        })
+        .catch(function (error) {
+            // handle error
+            console.log(error);
+            addAlert('获取历史消息失败')
+        })
+        .then(function () {
+            // always executed
+            addNotice("以上为历史消息");
+
+            // 根据roomName拼接websocket请求地址，建立长连接
+            // 请求url地址为/user/<user_id>/chat/
+            const ws_protocol = (window.location.protocol === 'https:') ? 'wss://' : 'ws://';
+            const chatSocket = new WebSocket(ws_protocol + window.location.host + window.location.pathname);
+
+            // 建立websocket连接时触发此方法
+            chatSocket.onopen = function (e) {
+                addNotice("已与服务器建立实时连接");
+                ele_body.scrollTop = ele_body.scrollHeight;
+            }
+
+            // 从后台接收到数据时触发此方法
+            // 接收到后台数据后对其解析，并加入到聊天记录chat-log
+            chatSocket.onmessage = function (e) {
+                const data = JSON.parse(e.data);
+                addText(data.message);
+                ele_body.scrollTop = ele_body.scrollHeight;
+            };
+
+            // websocket连接断开时触发此方法
+            chatSocket.onclose = function (e) {
+                addAlert('与' + userId + '的连接已断开。');
+                ele_body.scrollTop = ele_body.scrollHeight;
+            };
+
+            document.getElementById('input').focus();
+            document.getElementById('input').onkeyup = function (e) {
+                if (e.keyCode === 13) {  // enter, return
+                    document.getElementById('submit').click();
+                }
+            };
+
+            // 每当点击发送消息按钮，通过websocket的send方法向后台发送信息。
+            document.getElementById('submit').onclick = function (e) {
+                const messageInputDom = document.getElementById('input');
+                const message = messageInputDom.value;
+
+                //注意这里:先把文本数据转成json格式,然后调用send方法发送。
+                chatSocket.send(JSON.stringify({
+                    'content': message
+                }));
+                messageInputDom.value = '';
+            };
+        });
+</script>
+</body>
+</html>
