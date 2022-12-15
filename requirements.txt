@@ -1,0 +1,10 @@
+django~=3.2
+django-money
+django-csp
+django-cors-headers
+django-import-export
+djangorestframework~=3.12.4
+asgiref~=3.4.1
+channels~=3.0.4
+mssql-django
+Pillow
