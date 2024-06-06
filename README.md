@@ -1,7 +1,5 @@
 # 航购 HangBuy | 二手物品信息交流平台
 
-
-
 ## 1    Introduction
 
 With the rapid development of Internet technology, many online trading platforms for second-hand goods have emerged. These platforms vary in size but are not fully applicable to college students due to their high versatility. To compensate for existing platforms' shortcomings, we propose developing an information exchange platform tailored to on-campus students for used goods.
@@ -37,6 +35,8 @@ Your privacy is our priority. The system will never store the plaintext password
 In addition, the backend will check all the data received. Therefore, the backend will have special consideration for logical security. For example, all sessions of a user except the current one should be logged out at the backend after they change their passwords; primary keys should not use data with actual meaning; logged-in users can only delete and change items they have posted; logged-in users cannot log in repeatedly under the same session; users can only buy goods that have not been sold; users can only complete orders they have placed; original images should be deleted after the pictures are updated; oversized request contents should be rejected; etc.
 
 The rest of the document is in Chinese.
+
+https://github.com/kevintsq/HangBuyPublic/assets/62129747/ca3e2a5b-fc8a-485c-9428-8e573052e504
 
 ![Data Flow Diagram](README.assets/DataFlowDiagram.svg)
 
